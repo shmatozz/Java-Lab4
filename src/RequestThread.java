@@ -1,33 +1,34 @@
+import java.time.Instant;
 import java.util.Random;
 
 public class RequestThread implements Runnable {
     private final ElevatorsManager manager;
+    private final int requestsCount;
+    private final int requestsInterval;
 
-    RequestThread(ElevatorsManager manager) {
+    RequestThread(ElevatorsManager manager, int requestsCount, int requestsInterval) {
         this.manager = manager;
+        this.requestsCount = requestsCount;
+        this.requestsInterval = requestsInterval;
     }
     @Override
     public void run() {
-        Random random = new Random(0);
-        for (int i = 0; i < 15; i++) {
-            var start = random.nextInt(0, 15 + 1);
-            var end = random.nextInt(0, 15 + 1);
+        Random random = new Random(Instant.now().getEpochSecond());
+        for (int i = 0; i < requestsCount; i++) {
+            var start = random.nextInt(0, manager.floorsCount + 1);
+            var end = random.nextInt(0, manager.floorsCount + 1);
             while (start == end) {
-                end = random.nextInt(0, 15 + 1);
+                end = random.nextInt(0, manager.floorsCount + 1);
             }
             var direction = start > end ? -1 : 1;
             this.manager.addWaiters(new Request(start, end, direction));
             System.out.println("\uD83D\uDCE9 New request on " + start + " floor, " + "direction " + (direction == 1 ? "up" : "down"));
             try {
-                Thread.sleep(5000);
+                Thread.sleep(requestsInterval);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
-        for (int i = 0; i <= 15; i++) {
-            System.out.println(manager.floors.get(i).toString());
-        }
-        System.out.println(manager.first.passengers);
-        System.out.println(manager.second.passengers);
+        ElevatorsManager.requestsOver = true;
     }
 }

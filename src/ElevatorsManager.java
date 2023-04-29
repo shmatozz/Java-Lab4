@@ -5,11 +5,14 @@ public class ElevatorsManager {
     public ArrayList<Map<Integer, ArrayDeque<Integer>>> floors;
     Elevator first;
     Elevator second;
-    ElevatorsManager() {
+    public int floorsCount;
+    public static boolean requestsOver = false;
+    ElevatorsManager(int floorsCount) {
+        this.floorsCount = floorsCount;
         first = new Elevator(1);
         second = new Elevator(2);
-        floors = new ArrayList<>(16);
-        for (int i = 0; i <= 15; i++) {
+        floors = new ArrayList<>(floorsCount + 1);
+        for (int i = 0; i <= floorsCount; i++) {
             Map<Integer, ArrayDeque<Integer>> floorMap = new HashMap<>();
             floorMap.put(-1, new ArrayDeque<>());
             floorMap.put(1, new ArrayDeque<>());
@@ -24,47 +27,42 @@ public class ElevatorsManager {
         changeElevatorStatus(second);
     }
 
-    public int getDist(Request rq, Elevator elevator) {
-        int dist = 0;
-        if (elevator.status == 0) {
-            dist = Math.abs(elevator.currentFloor - rq.start);
-        } else if (elevator.status == rq.direction && elevator.status == 1) {
-
-        }
-        return dist;
-    }
-
-    public void addWaiters(Request rq) {
+    public synchronized void addWaiters(Request rq) {
         floors.get(rq.start).get(rq.direction).add(rq.end);
-        if (first.maxTargetFloor.isEmpty() || (first.passengerStatus == rq.direction &&
+        if (first.targetFloors.isEmpty() && second.targetFloors.isEmpty()) {
+            if (Math.abs(first.currentFloor - rq.start) <= Math.abs(second.currentFloor - rq.start)) {
+                first.targetFloors.add(rq.start);
+                first.passengerStatus = rq.direction;
+            } else {
+                second.targetFloors.add(rq.start);
+                second.passengerStatus = rq.direction;
+            }
+        } else if (first.targetFloors.isEmpty() || (first.passengerStatus == rq.direction &&
                 ((rq.direction == 1 && first.currentFloor <= rq.start) || (rq.direction == -1 && first.currentFloor > rq.start)))) {
-            first.maxTargetFloor.add(rq.start);
+            first.targetFloors.add(rq.start);
             first.passengerStatus = rq.direction;
-        } else if (second.maxTargetFloor.isEmpty() || (second.passengerStatus == rq.direction &&
+        } else if (second.targetFloors.isEmpty() || (second.passengerStatus == rq.direction &&
                 ((rq.direction == 1 && second.currentFloor <= rq.start) || (rq.direction == -1 && second.currentFloor > rq.start)))) {
-            second.maxTargetFloor.add(rq.start);
+            second.targetFloors.add(rq.start);
             second.passengerStatus = rq.direction;
         } else {
             requests.add(rq);
         }
-        System.out.println(first.maxTargetFloor);
-        System.out.println(second.maxTargetFloor);
     }
 
-    public void checkFloor(Elevator elevator) {
+    private void checkFloor(Elevator elevator) {
         if (elevator.passengerStatus != 0) {
             while (elevator.passengers.contains(elevator.currentFloor)) {
                 elevator.passengers.removeAll(List.of(elevator.currentFloor));
-                elevator.maxTargetFloor.removeAll(List.of(elevator.currentFloor));
-                System.out.println("❌ Passenger left " + elevator.number + " on floor " + elevator.currentFloor);
-                System.out.println(elevator.currentFloor + " " + elevator.maxTargetFloor);
+                elevator.targetFloors.removeAll(List.of(elevator.currentFloor));
+                System.out.println("❌ Passenger(s) left elevator " + elevator.number + " on floor " + elevator.currentFloor);
             }
 
             ArrayDeque<Integer> floorQueue = floors.get(elevator.currentFloor).get(elevator.passengerStatus);
-            while (!floorQueue.isEmpty()) {
-                System.out.println("✅ Passenger enter " + elevator.number + " on floor " + elevator.currentFloor);
+            while (!floorQueue.isEmpty() && elevator.passengers.size() < elevator.capacity) {
+                System.out.println("✅ Passenger enter elevator " + elevator.number + " on floor " + elevator.currentFloor);
                 int currentPassenger = floorQueue.poll();
-                elevator.maxTargetFloor.add(currentPassenger);
+                elevator.targetFloors.add(currentPassenger);
                 elevator.passengers.add(currentPassenger);
                 elevator.status = elevator.passengerStatus;
             }
@@ -81,45 +79,52 @@ public class ElevatorsManager {
                 elevator.status = -1;
                 elevator.passengerStatus = -1;
             }
-            while (!floorQueue.isEmpty()) {
+            while (!floorQueue.isEmpty() && elevator.passengers.size() < elevator.capacity) {
                 int currentPassenger = floorQueue.poll();
-                elevator.maxTargetFloor.add(currentPassenger);
+                elevator.targetFloors.add(currentPassenger);
                 elevator.passengers.add(currentPassenger);
-                System.out.println("✅ Passenger enter " + elevator.number + " on floor " + elevator.currentFloor);
-                System.out.println(elevator.currentFloor + " " + elevator.maxTargetFloor);
+                System.out.println("✅ Passenger enter elevator " + elevator.number + " on floor " + elevator.currentFloor);
             }
         }
     }
 
-    public void changeElevatorStatus(Elevator elevator) {
-        if (elevator.maxTargetFloor.isEmpty()) {
+    private void changeElevatorStatus(Elevator elevator) {
+        if (elevator.targetFloors.isEmpty()) {
             if (requests.isEmpty()) {
                 elevator.status = 0;
                 elevator.passengerStatus = 0;
             } else {
                 Request rq = requests.poll();
-                elevator.maxTargetFloor.add(rq.start);
+                elevator.targetFloors.add(rq.start);
                 elevator.passengerStatus = rq.direction;
                 elevator.status = elevator.currentFloor < rq.start ? 1 : -1;
-                System.out.println("Elevator " + elevator.number + " take req on floor " + rq.start);
+                System.out.println("\uD83D\uDD04 Elevator " + elevator.number + " take request on floor " + rq.start);
             }
-        } else if (elevator.maxTargetFloor.peek() == elevator.currentFloor) {
-            elevator.maxTargetFloor.removeAll(List.of(elevator.currentFloor));
-        } else if (elevator.maxTargetFloor.peek() <= elevator.currentFloor) {
+        } else if (elevator.targetFloors.peek() == elevator.currentFloor) {
+            elevator.targetFloors.removeAll(List.of(elevator.currentFloor));
+        } else if (elevator.targetFloors.peek() <= elevator.currentFloor) {
             elevator.status = -1;
         } else {
             elevator.status = 1;
         }
-        if (!elevator.maxTargetFloor.isEmpty() && elevator.status == 0) {
-            elevator.status = elevator.maxTargetFloor.peek() >= elevator.currentFloor ? 1 : -1;
-            System.out.println("\uD83D\uDD04 Elevator " + elevator.number + " get passenger on floor " + elevator.currentFloor);
-        } else if (elevator.status == 0) {
+
+        if (elevator.status == 0) {
             System.out.println("\uD83D\uDCA4 Elevator " + elevator.number + " waiting on floor " + elevator.currentFloor);
         } else if (elevator.status == -1) {
-            elevator.currentFloor--;
+            if (elevator.currentFloor > 0) {
+                elevator.currentFloor--;
+            } else {
+                elevator.status = 0;
+                elevator.passengerStatus = 0;
+            }
             System.out.println("\uD83D\uDD3D Elevator " + elevator.number + " going ↓. Current floor = " + elevator.currentFloor);
-        } else if (elevator.status == 1 ){
-            elevator.currentFloor++;
+        } else if (elevator.status == 1){
+            if (elevator.currentFloor < floorsCount) {
+                elevator.currentFloor++;
+            } else {
+                elevator.status = 0;
+                elevator.passengerStatus = 0;
+            }
             System.out.println("\uD83D\uDD3C Elevator " + elevator.number + " going ↑. Current floor = " + elevator.currentFloor);
         }
     }
