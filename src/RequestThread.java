@@ -23,7 +23,6 @@ public class RequestThread implements Runnable {
                 end = random.nextInt(0, manager.floorsCount + 1);
             }
             var direction = start > end ? -1 : 1;
-            System.out.println("\uD83D\uDCE9 New request on " + start + " floor, " + "direction " + (direction == 1 ? "up" : "down"));
             this.manager.addWaiters(new Request(start, end, direction));
             try {
                 Thread.sleep(requestsInterval);

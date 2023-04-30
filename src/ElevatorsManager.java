@@ -31,42 +31,55 @@ public class ElevatorsManager {
 
     // processing requests from requests thread
     public synchronized void addWaiters(Request rq) {
+        System.out.println("\uD83D\uDCE9 New request on " + rq.start + " floor, " + "direction " + (rq.direction == 1 ? "up" : "down"));
         floors.get(rq.start).get(rq.direction).add(rq.end);
         if (first.targetFloors.isEmpty() && second.targetFloors.isEmpty()) {
             if (Math.abs(first.currentFloor - rq.start) <= Math.abs(second.currentFloor - rq.start)) {
                 first.targetFloors.add(rq.start);
                 first.passengerStatus = rq.direction;
+                System.out.println("\uD83D\uDCE4 Elevator 1 take request on floor " + rq.start + ", direction " +
+                       (rq.direction == 1 ? "up" : "down"));
             } else {
                 second.targetFloors.add(rq.start);
                 second.passengerStatus = rq.direction;
+                System.out.println("\uD83D\uDCE4 Elevator 2 take request on floor " + rq.start + ", direction " +
+                        (rq.direction == 1 ? "up" : "down"));
             }
         } else if (first.targetFloors.isEmpty() || (first.passengerStatus == rq.direction &&
                 ((rq.direction == 1 && first.currentFloor <= rq.start) || (rq.direction == -1 && first.currentFloor >= rq.start)))) {
             first.targetFloors.add(rq.start);
             first.passengerStatus = rq.direction;
+            System.out.println("\uD83D\uDCE4 Elevator 1 take request on floor " + rq.start + ", direction " +
+                    (rq.direction == 1 ? "up" : "down"));
         } else if (second.targetFloors.isEmpty() || (second.passengerStatus == rq.direction &&
                 ((rq.direction == 1 && second.currentFloor <= rq.start) || (rq.direction == -1 && second.currentFloor >= rq.start)))) {
             second.targetFloors.add(rq.start);
             second.passengerStatus = rq.direction;
+            System.out.println("\uD83D\uDCE4 Elevator 2 take request on floor " + rq.start + ", direction " +
+                    (rq.direction == 1 ? "up" : "down"));
         } else {
             requests.add(rq);
+            System.out.println("⌛️ All elevators are busy, request put in queue");
         }
     }
 
     // check current elevator floor to pop or push passengers
     private void checkFloor(Elevator elevator) {
-        if (elevator.passengerStatus != 0) {
-            while (elevator.passengers.contains(elevator.currentFloor)) {
-                var passengerCount = elevator.passengers.size();
-                elevator.passengers.removeAll(List.of(elevator.currentFloor));
-                elevator.targetFloors.removeAll(List.of(elevator.currentFloor));
-                System.out.println("❌ " + (passengerCount - elevator.passengers.size()) +
-                        " Passenger(s) left elevator " + elevator.number + " on floor " + elevator.currentFloor);
+        while (elevator.passengers.contains(elevator.currentFloor)) {
+            var passengerCount = elevator.passengers.size();
+            elevator.passengers.removeAll(List.of(elevator.currentFloor));
+            elevator.targetFloors.removeAll(List.of(elevator.currentFloor));
+            System.out.println("❌ " + (passengerCount - elevator.passengers.size()) +
+                    " Passenger(s) left elevator " + elevator.number + " on floor " + elevator.currentFloor);
+            if (elevator.passengers.size() == 0) {
+                elevator.passengerStatus = 0;
             }
-
+        }
+        if (elevator.passengerStatus != 0) {
             ArrayDeque<Integer> floorQueue = floors.get(elevator.currentFloor).get(elevator.passengerStatus);
             while (!floorQueue.isEmpty() && elevator.passengers.size() < elevator.capacity) {
                 int currentPassenger = floorQueue.poll();
+                elevator.targetFloors.removeAll(List.of(elevator.currentFloor));
                 popFromRequests(elevator, currentPassenger);
                 elevator.targetFloors.add(currentPassenger);
                 elevator.passengers.add(currentPassenger);
@@ -88,6 +101,7 @@ public class ElevatorsManager {
             }
             while (!floorQueue.isEmpty() && elevator.passengers.size() < elevator.capacity) {
                 int currentPassenger = floorQueue.poll();
+                elevator.targetFloors.removeAll(List.of(elevator.currentFloor));
                 popFromRequests(elevator, currentPassenger);
                 elevator.targetFloors.add(currentPassenger);
                 elevator.passengers.add(currentPassenger);
@@ -120,11 +134,12 @@ public class ElevatorsManager {
                 elevator.targetFloors.add(rq.start);
                 elevator.passengerStatus = rq.direction;
                 elevator.status = elevator.currentFloor < rq.start ? 1 : -1;
-                System.out.println("\uD83D\uDD04 Elevator " + elevator.number + " take request on floor " + rq.start);
+                System.out.println("\uD83D\uDCE4 Elevator " + elevator.number + " take request on floor " + rq.start
+                        + ", direction " +  (rq.direction == 1 ? "up" : "down"));
             }
         } else if (elevator.targetFloors.peek() == elevator.currentFloor) {
             elevator.targetFloors.removeAll(List.of(elevator.currentFloor));
-        } else if (elevator.targetFloors.peek() <= elevator.currentFloor) {
+        } else if (elevator.targetFloors.peek() < elevator.currentFloor) {
             elevator.status = -1;
         } else {
             elevator.status = 1;

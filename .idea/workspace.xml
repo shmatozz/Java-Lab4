@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0352bd79-257d-4a87-b4f5-856143928c50" name="Changes" comment="fix empty request queue bug">
+    <list default="true" id="0352bd79-257d-4a87-b4f5-856143928c50" name="Changes" comment="few comments">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ElevatorsManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ElevatorsManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ElevatorsThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ElevatorsThread.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/RequestThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/RequestThread.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -73,7 +72,7 @@
       <workItem from="1682688737895" duration="9869000" />
       <workItem from="1682745098747" duration="18488000" />
       <workItem from="1682767337040" duration="20082000" />
-      <workItem from="1682834878676" duration="9606000" />
+      <workItem from="1682834878676" duration="13609000" />
     </task>
     <task id="LOCAL-00001" summary="first somehow working version">
       <created>1682781080920</created>
@@ -96,7 +95,14 @@
       <option name="project" value="LOCAL" />
       <updated>1682843148553</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="few comments">
+      <created>1682844981482</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1682844981482</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -117,6 +123,7 @@
     <MESSAGE value="first somehow working version" />
     <MESSAGE value="some fixes, provide more stable work" />
     <MESSAGE value="fix empty request queue bug" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix empty request queue bug" />
+    <MESSAGE value="few comments" />
+    <option name="LAST_COMMIT_MESSAGE" value="few comments" />
   </component>
 </project>
