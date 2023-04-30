@@ -3,10 +3,11 @@ import java.util.*;
 public class ElevatorsManager {
     public static List<Request> requests = new ArrayList<>();
     public ArrayList<Map<Integer, ArrayDeque<Integer>>> floors;
-    Elevator first;
-    Elevator second;
+    public Elevator first;
+    public Elevator second;
     public int floorsCount;
     public static boolean requestsOver = false;
+
     ElevatorsManager(int floorsCount) {
         this.floorsCount = floorsCount;
         first = new Elevator(1);
@@ -20,6 +21,7 @@ public class ElevatorsManager {
         }
     }
 
+    // calls elevators functions to open doors and move
     public synchronized void stepElevators() {
         checkFloor(first);
         checkFloor(second);
@@ -27,6 +29,7 @@ public class ElevatorsManager {
         changeElevatorStatus(second);
     }
 
+    // processing requests from requests thread
     public synchronized void addWaiters(Request rq) {
         floors.get(rq.start).get(rq.direction).add(rq.end);
         if (first.targetFloors.isEmpty() && second.targetFloors.isEmpty()) {
@@ -50,6 +53,7 @@ public class ElevatorsManager {
         }
     }
 
+    // check current elevator floor to pop or push passengers
     private void checkFloor(Elevator elevator) {
         if (elevator.passengerStatus != 0) {
             while (elevator.passengers.contains(elevator.currentFloor)) {
@@ -92,7 +96,8 @@ public class ElevatorsManager {
         }
     }
 
-    public void popFromRequests(Elevator elevator, int currentPassenger) {
+    // pop taken requests from requests queue
+    private void popFromRequests(Elevator elevator, int currentPassenger) {
         var i = 0;
         while (i < requests.size()) {
             var request = requests.get(i);
@@ -103,6 +108,7 @@ public class ElevatorsManager {
         }
     }
 
+    // move elevator
     private void changeElevatorStatus(Elevator elevator) {
         if (elevator.targetFloors.isEmpty()) {
             if (requests.isEmpty()) {

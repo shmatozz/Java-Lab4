@@ -2,7 +2,7 @@ import java.time.Instant;
 import java.util.Random;
 
 public class RequestThread implements Runnable {
-    private final ElevatorsManager manager;
+    private final ElevatorsManager manager; // manager to send requests
     private final int requestsCount;
     private final int requestsInterval;
 
@@ -11,9 +11,11 @@ public class RequestThread implements Runnable {
         this.requestsCount = requestsCount;
         this.requestsInterval = requestsInterval;
     }
+
     @Override
     public void run() {
         Random random = new Random(Instant.now().getEpochSecond());
+        // generate requests
         for (int i = 0; i < requestsCount; i++) {
             var start = random.nextInt(0, manager.floorsCount + 1);
             var end = random.nextInt(0, manager.floorsCount + 1);
