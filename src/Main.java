@@ -5,6 +5,7 @@ public class Main {
         System.out.println("Default elevator time per floor is 1000ms = 1s");
         Scanner scanner = new Scanner(System.in);
 
+        // input settings of elevators
         System.out.print("Input floors count: ");
         var floorsCount = scanner.nextInt();
         System.out.print("Input requests count: ");
@@ -12,6 +13,7 @@ public class Main {
         System.out.print("Input requests interval (ms): ");
         var requestsInterval = scanner.nextInt();
 
+        // init elevators manager, requests and elevators threads
         ElevatorsManager manager = new ElevatorsManager(floorsCount);
         Thread requests = new Thread(new RequestThread(manager, requestsCount, requestsInterval));
         Thread elevators = new Thread(new ElevatorsThread(manager));
@@ -23,5 +25,13 @@ public class Main {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+
+        System.out.println("\nCURRENT BUILDING INFO: ");
+        for (int i = manager.floorsCount; i >= 0; i--) {
+            System.out.println("Floor " + i + " " + manager.floors.get(i).toString());
+        }
+        System.out.println("First elevator " + manager.first.passengers);
+        System.out.println("Second elevator " + manager.second.passengers);
+        System.out.println("Requests queue " + ElevatorsManager.requests);
     }
 }

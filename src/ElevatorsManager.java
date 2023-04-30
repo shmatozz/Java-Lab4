@@ -1,7 +1,7 @@
 import java.util.*;
 
 public class ElevatorsManager {
-    public static Queue<Request> requests = new ArrayDeque<>();
+    public static List<Request> requests = new ArrayList<>();
     public ArrayList<Map<Integer, ArrayDeque<Integer>>> floors;
     Elevator first;
     Elevator second;
@@ -38,11 +38,11 @@ public class ElevatorsManager {
                 second.passengerStatus = rq.direction;
             }
         } else if (first.targetFloors.isEmpty() || (first.passengerStatus == rq.direction &&
-                ((rq.direction == 1 && first.currentFloor <= rq.start) || (rq.direction == -1 && first.currentFloor > rq.start)))) {
+                ((rq.direction == 1 && first.currentFloor <= rq.start) || (rq.direction == -1 && first.currentFloor >= rq.start)))) {
             first.targetFloors.add(rq.start);
             first.passengerStatus = rq.direction;
         } else if (second.targetFloors.isEmpty() || (second.passengerStatus == rq.direction &&
-                ((rq.direction == 1 && second.currentFloor <= rq.start) || (rq.direction == -1 && second.currentFloor > rq.start)))) {
+                ((rq.direction == 1 && second.currentFloor <= rq.start) || (rq.direction == -1 && second.currentFloor >= rq.start)))) {
             second.targetFloors.add(rq.start);
             second.passengerStatus = rq.direction;
         } else {
@@ -53,18 +53,21 @@ public class ElevatorsManager {
     private void checkFloor(Elevator elevator) {
         if (elevator.passengerStatus != 0) {
             while (elevator.passengers.contains(elevator.currentFloor)) {
+                var passengerCount = elevator.passengers.size();
                 elevator.passengers.removeAll(List.of(elevator.currentFloor));
                 elevator.targetFloors.removeAll(List.of(elevator.currentFloor));
-                System.out.println("❌ Passenger(s) left elevator " + elevator.number + " on floor " + elevator.currentFloor);
+                System.out.println("❌ " + (passengerCount - elevator.passengers.size()) +
+                        " Passenger(s) left elevator " + elevator.number + " on floor " + elevator.currentFloor);
             }
 
             ArrayDeque<Integer> floorQueue = floors.get(elevator.currentFloor).get(elevator.passengerStatus);
             while (!floorQueue.isEmpty() && elevator.passengers.size() < elevator.capacity) {
-                System.out.println("✅ Passenger enter elevator " + elevator.number + " on floor " + elevator.currentFloor);
                 int currentPassenger = floorQueue.poll();
+                popFromRequests(elevator, currentPassenger);
                 elevator.targetFloors.add(currentPassenger);
                 elevator.passengers.add(currentPassenger);
                 elevator.status = elevator.passengerStatus;
+                System.out.println("✅ Passenger enter elevator " + elevator.number + " on floor " + elevator.currentFloor);
             }
         } else {
             ArrayDeque<Integer> floorQueueUp = floors.get(elevator.currentFloor).get(1);
@@ -81,10 +84,22 @@ public class ElevatorsManager {
             }
             while (!floorQueue.isEmpty() && elevator.passengers.size() < elevator.capacity) {
                 int currentPassenger = floorQueue.poll();
+                popFromRequests(elevator, currentPassenger);
                 elevator.targetFloors.add(currentPassenger);
                 elevator.passengers.add(currentPassenger);
                 System.out.println("✅ Passenger enter elevator " + elevator.number + " on floor " + elevator.currentFloor);
             }
+        }
+    }
+
+    public void popFromRequests(Elevator elevator, int currentPassenger) {
+        var i = 0;
+        while (i < requests.size()) {
+            var request = requests.get(i);
+            if (request.start == elevator.currentFloor && request.end == currentPassenger) {
+                requests.remove(i);
+            }
+            i++;
         }
     }
 
@@ -94,7 +109,8 @@ public class ElevatorsManager {
                 elevator.status = 0;
                 elevator.passengerStatus = 0;
             } else {
-                Request rq = requests.poll();
+                Request rq = requests.get(0);
+                requests.remove(0);
                 elevator.targetFloors.add(rq.start);
                 elevator.passengerStatus = rq.direction;
                 elevator.status = elevator.currentFloor < rq.start ? 1 : -1;
